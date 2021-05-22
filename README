@@ -1,0 +1,6 @@
+## Setup
+
+Download:
+https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
+
+Move result to: ./resource/

@@ -1,0 +1,5 @@
+SQLAlchemy == 1.4.5
+finviz == 1.4.1
+pandas == 1.2.3
+requests == 2.25.1
+psycopg2
