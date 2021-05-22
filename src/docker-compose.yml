@@ -11,7 +11,7 @@ services:
     volumes:
        - postgres:/data/postgres
     ports:
-      - "5432:5432"
+      - "3000:5432"
     networks:
       - postgres
     restart: always
@@ -27,7 +27,7 @@ services:
        - pgadmin:/root/.pgadmin
 
     ports:
-      - "5050:80"
+      - "1111:80"
     networks:
       - postgres
     restart: always
