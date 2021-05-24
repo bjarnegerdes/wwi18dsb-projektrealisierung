@@ -13,13 +13,14 @@ class IdentifyTickersAndSynonyms:
     def __init__(self, filters = ['cap_midover', 'ipodate_more1', 'exch_nasd']):
         self.filters = filters
         self.ticker_synonyms = {}
+        self.ticker_blacklist = open("TICKERBLACKLIST").read().split()
         
         
     def scrapeTickers(self):
         stock_list = Screener(filters=self.filters, table='Overview', order='ticker')
         tickers_df = pd.DataFrame(stock_list.data)
         
-        return tickers_df
+        return tickers_df[~tickers_df["Ticker"].isin(self.ticker_blacklist)]
         
     def identifySynonyms(self, tickers_df):
         patterns_to_delete = [", Inc.", " Inc.", ", inc."
