@@ -1,6 +1,25 @@
-## Setup
+## Setup on linux and mac:
 
-Download:
-https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
+The following code must be executed from the base directory.
 
-Move result to: ./resource/
+Prerequisites:
+
+'''
+wget https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin -O ./src/filtering/resource/lid.176.bin
+wget https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.0.0/en_core_web_sm-3.0.0.tar.gz ./src/filtering/resource/en_core_web_sm-3.0.0.tar.gz
+cp ./src/filtering/resource/en_core_web_sm-3.0.0.tar.gz ./src/sentiment/resource/en_core_web_sm-3.0.0.tar.gz
+'''
+
+Start:
+
+'''
+cd ./src
+docker-compose build 
+docker-compose up
+'''
+
+
+Access:
+
+The data will filtered, labeled according to their sentiment and can be accessed with PgAdmin at '''localhost:1111'''.
+Additionally the database can be accessed under '''localhost:3000''' with the user '''admin''' and the password '''password'''.

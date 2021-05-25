@@ -32,4 +32,4 @@ y = df_labeled["is_topic"].values
 xgb = XGBClassifier()
 xgb.fit(X,y)
 
-pickle.dump(xgb, open("../models/filtering_model.pkl", "wb"))
+pickle.dump(xgb, open("../resource/models/filtering_model.pkl", "wb"))

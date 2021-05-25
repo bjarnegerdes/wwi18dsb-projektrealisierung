@@ -20,22 +20,6 @@ SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
---
--- Name: redditpost; Type: TABLE; Schema: public; Owner: admin
---
-
-CREATE TABLE public.redditpost (
-    ticker character varying NOT NULL,
-    created_utc timestamp without time zone NOT NULL,
-    comment character varying NOT NULL
-);
-
-
-ALTER TABLE public.redditpost OWNER TO admin;
-
---
--- Name: redditposts; Type: TABLE; Schema: public; Owner: admin
---
 
 CREATE TABLE public.redditposts (
     ticker character varying NOT NULL,
@@ -47,13 +31,6 @@ CREATE TABLE public.redditposts (
 
 
 ALTER TABLE public.redditposts OWNER TO admin;
-
---
--- Name: redditpost redditpost_pkey; Type: CONSTRAINT; Schema: public; Owner: admin
---
-
-ALTER TABLE ONLY public.redditpost
-    ADD CONSTRAINT redditpost_pkey PRIMARY KEY (ticker, created_utc);
 
 
 --

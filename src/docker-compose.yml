@@ -32,9 +32,23 @@ services:
       - postgres
     restart: always
 
-  python:
+  python-scraper:
     container_name: data_scraper
     build: ./scraper/
+    networks:
+      - postgres
+    restart: always
+
+  python-filter:
+    container_name: data_filter
+    build: ./filtering/
+    networks:
+      - postgres
+    restart: always
+
+  python-sentiment:
+    container_name: sentiment_model
+    build: ./sentiment/
     networks:
       - postgres
     restart: always

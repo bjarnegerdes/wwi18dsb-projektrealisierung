@@ -25,7 +25,7 @@ class Redditpost(Base):
 
 class DatabaseFilteringHandler:
     
-    def __init__(self, db_con = "postgresql://admin:password@h2933354.stratoserver.net:3000/admin"):
+    def __init__(self, db_con = "postgresql://admin:password@postgres_container/admin"):
         self.engine = create_engine(db_con)
         self.conn = self.engine.connect()
         self.filter_model = Model()
@@ -51,21 +51,27 @@ class DatabaseFilteringHandler:
         
         while True:
             data = self.getData(limit)
-            comments = [d.comment for d in data]
             
-            if len(comments) >= 1_000:
-                n_cores = -1
-            else:
-                n_cores = 1
+            if type(data) != None:     
+                comments = [d.comment for d in data]
+                if len(comments) >= 1_000:
+                    n_cores = -1
+                else:
+                    n_cores = 1
                 
-            filter_condition = self.filterData(comments, n_cores)
+                filter_condition = self.filterData(comments, n_cores)
+    
+                for d, f in zip(data, filter_condition):
+                    if f == False:
+                        d.passed_filter_checks = False
+                    if f == True:
+                        d.passed_filter_checks = True
 
-            for d, f in zip(data, filter_condition):
-                d.passed_filter_checks = True
                 
-            self.session.commit()
-            if 10_000 > len(comments):
-                sleep(300)
+                self.session.commit()
+                
+                if 10_000 > len(comments):
+                    sleep(300)
                             
             
                 

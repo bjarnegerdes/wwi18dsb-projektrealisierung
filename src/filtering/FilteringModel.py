@@ -15,8 +15,8 @@ sys.path.append("..")
 class Model:
 
     def __init__(self, SPACY_MODEL="en_core_web_sm",\
-                 PRETRAINED_MODEL_PATH = '../../resource/lid.176.bin',\
-                 TOPIC_MODEL_PATH = "../../resource/models/filtering_model.pkl"):
+                 PRETRAINED_MODEL_PATH = './resource/lid.176.bin',\
+                 TOPIC_MODEL_PATH = "./resource/models/filtering_model.pkl"):
         
         self.fasttext_model = fasttext.load_model(PRETRAINED_MODEL_PATH)
         self.nlp = spacy.load(SPACY_MODEL)

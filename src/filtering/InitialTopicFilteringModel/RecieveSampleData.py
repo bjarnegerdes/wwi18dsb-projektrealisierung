@@ -51,13 +51,19 @@ tds = TDS()
 
 n_negative = int(len(positives_sure)*1.2)
 pbar = tqdm(total = n_negative)
+pbar.update(len(negatives_sure))
 
 while len(negatives_sure) <= n_negative:
-    scraped_batch = [c["comment"] for c in tds.scraperNews() if len(c["comment"]) > 10]
-    negatives_sure = negatives_sure.union(scraped_batch)
-    time.sleep(5)
-    pbar.set_description(f"{len(negatives_sure)} of {n_negative} scraped")
-    pbar.update(len(scraped_batch))
+    news = tds.scraperNews() 
+    if len(news) > 0:
+        scraped_batch = [c["comment"] for c in news if len(c["comment"]) > 10]
+        nb_old = len(negatives_sure)
+        negatives_sure = negatives_sure.union(scraped_batch)
+        nb_new = len(negatives_sure)
+        nb_gain= nb_new - nb_old
+        pbar.set_description(f"{len(negatives_sure)} of {n_negative} scraped")
+        pbar.update(nb_gain)
+    time.sleep(10)
     
 # clean negatives
 negatives_sure = pd.Series(list(negatives_sure))
