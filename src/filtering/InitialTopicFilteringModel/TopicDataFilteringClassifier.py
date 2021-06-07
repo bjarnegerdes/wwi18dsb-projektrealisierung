@@ -75,7 +75,7 @@ class FindSureSamples:
         
         return self.sure_samples
 
-# finde usefull samples per k fold and merge them
+# find usefull samples per k fold and merge them
 useable_samples = [FindSureSamples(k).process(XGBClassifier()) for k in k_folds]
 usefull_samples_merged = pd.concat(useable_samples)
 train = df_labeled[df_labeled.index.isin(usefull_samples_merged.index)]
@@ -95,12 +95,13 @@ train = df_labeled[df_labeled.index.isin(usefull_samples_merged.index)]
 bias_samples = int((df_labeled.shape[0] - train.shape[0])*0.33333)
 train = train.append(df_labeled[~df_labeled.index.isin(usefull_samples_merged.index)].sample(bias_samples))
 
+
+                      
 # final model check on validation dataset
 X_train =  np.array([x.vector for x in train["doc"]])
 y_train = train["is_topic"].values
 X_valid = np.array([x.vector for x in  valid["doc"]])
 y_valid = valid["is_topic"].values
-
 
 # final model check
 samples = FindSureSamples([X_train, X_valid, y_train, y_valid, valid])

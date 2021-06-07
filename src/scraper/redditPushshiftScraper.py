@@ -26,7 +26,6 @@ class TickerDataScraper:
             if size != None:
                 url += f"&size={size}"
             
-            print(url)
             try:
                 r = requests.get(url)
                 posts_list = r.json()["data"]
