@@ -7,7 +7,7 @@ Created on Wed May 19 21:02:00 2021
 from time import sleep
 from SentimentModel import Model
 from sqlalchemy.orm import Session
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, and_
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy import Boolean, Column, DateTime, Float, String
 
@@ -35,7 +35,8 @@ class DatabaseSentimentHandler:
         self.session = Session(self.engine)       
  
     def getData(self, limit=None):
-        query = self.session.query(Redditpost).filter(Redditpost.passed_filter_checks == True)
+        query = self.session.query(Redditpost).filter(and_(Redditpost.passed_filter_checks == True,
+                                                           Redditpost.sentiment == None))
         if limit != None:
             data = query.limit(limit)
         if limit == None:
@@ -54,23 +55,17 @@ class DatabaseSentimentHandler:
             
             if type(data) != None:     
                 comments = [d.comment for d in data]
-                if len(comments) >= 1_000:
-                    n_cores = -1
+                if len(comments) == 0:
+                    sleep(60)
                 else:
-                    n_cores = 1
-                
-                sentiment_scores = self.sentimentData(comments, n_cores)
+                    sentiment_scores = self.sentimentData(comments, -1)
+        
+                    for d, f in zip(data, sentiment_scores):
+                        d.sentiment = round(float(f),6)
     
-                for d, f in zip(data, sentiment_scores):
-                    d.sentiment = round(float(f),6)
+                    
+                    self.session.commit()
 
-                
-                self.session.commit()
-                
-                if 10_000 > len(comments):
-                    sleep(300)
-                            
-            
                 
 if __name__ == '__main__':
     dbsentiment = DatabaseSentimentHandler()

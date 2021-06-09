@@ -54,24 +54,21 @@ class DatabaseFilteringHandler:
             
             if type(data) != None:     
                 comments = [d.comment for d in data]
-                if len(comments) >= 1_000:
-                    n_cores = -1
+                if len(comments) == 0:
+                    sleep(60)
                 else:
-                    n_cores = 1
-                
-                filter_condition = self.filterData(comments, n_cores)
-    
-                for d, f in zip(data, filter_condition):
-                    if f == False:
-                        d.passed_filter_checks = False
-                    if f == True:
-                        d.passed_filter_checks = True
 
-                
-                self.session.commit()
-                
-                if 10_000 > len(comments):
-                    sleep(300)
+                    filter_condition = self.filterData(comments, -1)
+                    
+                    for d, f in zip(data, filter_condition):
+                        if f == False:
+                            d.passed_filter_checks = False
+                        if f == True:
+                            d.passed_filter_checks = True
+    
+                    
+                    self.session.commit()
+                    
                             
             
                 
