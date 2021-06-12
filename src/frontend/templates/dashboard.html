@@ -112,21 +112,25 @@
 <!-- Dashboard
 ================================================== -->
 <div class="wow fadeInUp" data-wow-delay="1.6s">
-   <h1 align="center">Sentiment Development of {{company}}</h1>
+   <h1 align="center">24h Rolling Average of Reddit Sentiments</h1>
    <canvas id="sentiment" height="80"></canvas>
    <script>
    var ctx = document.getElementById('sentiment');
    var myChart = new Chart(ctx, {
       type: 'line',
       data: {
-         labels: {{labels}},
-         datasets: [{
-               data: {{data}},
-               label: "Reddit Sentiment",
-               borderColor: "rgba(152, 176, 155, 0.8)",
+         labels: {{sentiment_data[0]}},
+         datasets: [
+            {% for data in sentiment_data[1] %}
+            {
+               data: {{data[0]}},
+               label: "{{data[1]| safe }}",
+               borderColor: "{{data[2]| safe }}",
                fill: false,
-               lineTension: 0.1
-         }]
+               lineTension: 0
+            },
+            {% endfor %}
+      ]
       },
       options: {
       legend: {
@@ -138,6 +142,12 @@
             time: {
                unit: 'day'
          }
+         }],
+         yAxes : [{
+            ticks : {
+               max : 1,    
+               min : -1
+            }
          }]
       }
    }

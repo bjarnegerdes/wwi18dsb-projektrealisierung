@@ -35,6 +35,7 @@
   <!-- Favicon
   ================================================== -->
   <link href="../static/images/favicon.ico" rel="shortcut icon"/>
+
 </head>
 <body>
 
@@ -117,11 +118,11 @@
                   <form id="preferences" method="post" action="/preferences_end">
                      
                      <p>Which sectors do you prefer?</p>
-                     <select name="sector" class="form-control">
-                        <option value="1">1</option>
-                        <option value ="2">2</option>
-                        <option value ="3">3</option>
-                     </select>
+                     <select class="form-control" multiple name=sector>
+                        {% for sector in sectors%}
+                        <option value={{sector.replace(" ", "_")}}>{{sector}}</option>
+                        {% endfor %}
+                      </select>
 
                      <p><br/>How risk-averse are you?</p>
                      <select name="risk" class="form-control">
@@ -136,10 +137,13 @@
                         <option value ="2">2</option>
                         <option value ="3">3</option>
                      </select>
+                     
+                     <section id="blog" color="#777">
+                        <div class="blog-thumb">
+                           <input type="submit" class="btn btn-default" value="CONTINUE">
+                        </div>
+                     </section>
 
-                     <div class="contact-submit" style="margin-top: 50px;">
-                        <input type="submit" class="form-control submit" value="C O N T I N U E">
-                     </div>
                   </form>
                </div>
             </center>
@@ -150,7 +154,7 @@
 
 <!-- Footer section
 ================================================== -->
-<footer>
+<footer style="margin-top: -200px;">
 	<div class="container">
 		<div class="row">
 			<div class="col-md-12 col-sm-12">
