@@ -9,7 +9,7 @@ import requests
 
 class TickerDataScraper:
     
-    def __init__(self, baseurl = "https://api.pushshift.io/reddit/comment/search/?q=keyword&sort=desc&unique=1",\
+    def __init__(self, baseurl = "https://beta.pushshift.io/search/reddit/comments?q=keyword&sort=desc",\
 		subreddits=["walltstreetbets", "pennystocks", "Stock_Picks",\
 			"stocks", "StockMarket", "RobinHood", "WallStreetbetsELITE",\
             "Superstonk", "InvestmentClub", "weedstocks", "investing", "stocks"]):
@@ -35,5 +35,4 @@ class TickerDataScraper:
 
             except: 
                 return None
-                
         return data

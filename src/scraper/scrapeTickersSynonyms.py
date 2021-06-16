@@ -52,7 +52,3 @@ class IdentifyTickersAndSynonyms:
       
         return self.ticker_synonyms
         
-    
-    
-x = IdentifyTickersAndSynonyms()
-tickers = x.scrapeTickers()
