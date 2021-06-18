@@ -110,9 +110,9 @@ def dashboard():
         tickerdata = pd.DataFrame(session.query(Redditpost.ticker, Redditpost.created_utc, Redditpost.sentiment).filter(and_(Redditpost.ticker.in_(relevant_tickers), Redditpost.sentiment != None)).all(),\
                   columns=["Ticker", "created_utc", "sentiment"]).sort_values("created_utc")
 
-        #Join the tickers with the sector
+        #Join the tickers with the metadata
         tickerdata = pd.merge(tickerdata, df_data, on=["Ticker", "Ticker"], how="left", indicator=True
-            ).query('_merge=="both"')[["Ticker","created_utc","sentiment","Sector"]]
+            ).query('_merge=="both"')[["Ticker", "created_utc", "sentiment", "Company", "Sector", "Industry", "Country", "Price", "Perf YTD", "Volatility M"]]
         
         #Define colors used in the dashboard
         rgb=["rgba(152, 176, 155, 0.8)", "rgba(8, 103, 131, 0.8)", "rgba(146, 140, 138, 0.8)", "rgba(192, 192, 153, 0.8)", "rgba(59, 60, 59, 0.8)", "rgba(71, 173, 207, 0.8)", "rgba(99, 136, 104, 0.8)", "rgba(8, 75, 96, 0.8)", "rgba(8, 50, 62, 0.8)", "rgba(192, 226, 238, 0.8)"]      
@@ -120,22 +120,28 @@ def dashboard():
         #Aggregate data per ticker
         series_collection = []
         counter = 0
-        for company in set(tickerdata["Ticker"]):
+        for company in sorted(list(set(tickerdata["Ticker"]))):
 
             # Extract the data for each each ticker
             df = tickerdata[tickerdata['Ticker'] == company]
 
-            # Read the sector of the ticker
-            sector_new = list(df_data[(df_data["Ticker"] == company)]["Sector"])[0]
+            # Read the matadata of the ticker
+            name_variable = list(df_data[(df_data["Ticker"] == company)]["Company"])[0]
+            sector_variable = list(df_data[(df_data["Ticker"] == company)]["Sector"])[0]
+            industry_variable = list(df_data[(df_data["Ticker"] == company)]["Industry"])[0]
+            country_variable = list(df_data[(df_data["Ticker"] == company)]["Country"])[0]
+            price_variable = list(df_data[(df_data["Ticker"] == company)]["Price"])[0]
+            return_variable = list(df_data[(df_data["Ticker"] == company)]["Perf YTD"])[0]
+            risk_variable = list(df_data[(df_data["Ticker"] == company)]["Volatility M"])[0]
 
             # Add a current timestamp with sentiment 0 to ensure that the time series of every ticker has same length
-            df = df.append(pd.DataFrame({'Ticker':[company],'created_utc':[datetime.datetime.utcnow()],'sentiment':[0],'Sector':[sector_new]}), ignore_index=False)
+            df = df.append(pd.DataFrame({'Ticker':[company],'created_utc':[datetime.datetime.utcnow()],'sentiment':[0], 'Company':[name_variable], 'Sector':[sector_variable], 'Industry':[industry_variable], 'Country':[country_variable], 'Price':[price_variable], 'Perf YTD':[return_variable], 'Volatility':[risk_variable]}), ignore_index=False)
 
             # Calculate average sentiment per 6 hours and calculate the rolling average based on the 6-hour-average
             resampled_ticker = df.resample('6h', on='created_utc').sentiment.mean().fillna(0).rolling('24h').mean()
 
             # Safe for each ticker: (newest 125 sentiment 6-hour-time-series-intervalls, comany and sector, used line color)
-            series_collection.append((list(resampled_ticker)[-125:], company + ", " + sector_new, rgb[counter]))
+            series_collection.append((list(resampled_ticker)[-125:], company, name_variable, sector_variable, industry_variable, country_variable, price_variable, return_variable, risk_variable, rgb[counter]))
 
             #Allows repaeting the colors (we use 10 different colors)
             counter +=1
@@ -151,7 +157,13 @@ def dashboard():
         sentiment_data = [[int(date/1000000) for date in resampled_ticker.index.values.tolist()][-125:], series_collection]
         #sentiment_data = [[int(date/1000000) for date in tickerdata.index.values.tolist()], list(tickerdata["sentiment"].rolling('24h').mean())]
         
-        return render_template('dashboard.html', sentiment_data=sentiment_data)
+        risk_data = [[data[1] for data in sentiment_data[1]]]
+        risk_data.append([float(data[8].strip("%")) for data in sentiment_data[1]])
+        risk_data.append([data[9] for data in sentiment_data[1]])
+        risk_data.append([data[9].replace("0.8", "0.7") for data in sentiment_data[1]])
+        risk_data.append([float(data[7].strip("%")) for data in sentiment_data[1]])
+
+        return render_template('dashboard.html', sentiment_data=sentiment_data, risk_data=risk_data)
     except NameError:
         return render_template('preferences.html', sectors=sorted(list(set(df_data['Sector']))))
 
@@ -165,4 +177,4 @@ def team():
 # In our case we are executing the script. Therefore, __name__ will be equal to "__main__". 
 # That means the if conditional statement is satisfied and the app.run() method will be executed.
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=500, debug=True)

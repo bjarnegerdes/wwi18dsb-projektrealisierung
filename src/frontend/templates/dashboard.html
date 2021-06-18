@@ -124,8 +124,8 @@
             {% for data in sentiment_data[1] %}
             {
                data: {{data[0]}},
-               label: "{{data[1]| safe }}",
-               borderColor: "{{data[2]| safe }}",
+               label: "{{data[1] + ", " + data[3]| safe }}",
+               borderColor: "{{data[-1]| safe }}",
                fill: false,
                lineTension: 0
             },
@@ -133,24 +133,72 @@
       ]
       },
       options: {
-      legend: {
-      display: true
-      },
-      scales: {
-         xAxes: [{
-            type: 'time',
-            time: {
-               unit: 'day'
-         }
-         }],
-         yAxes : [{
-            ticks : {
-               max : 1,    
-               min : -1
+         legend: {
+         display: true
+         },
+         scales: {
+            xAxes: [{
+               type: 'time',
+               time: {
+                  unit: 'day'
             }
-         }]
+            }],
+            yAxes : [{
+               ticks : {
+                  max : 1,    
+                  min : -1
+               }
+            }]
+         }
       }
-   }
+   });
+   </script>
+</div>
+
+<div class="wow fadeInUp" data-wow-delay="1.6s">
+   <h1 align="center">Risk-Score and Return</h1>
+   <canvas id="risk" height="80"></canvas>
+   <script>
+   var ctx = document.getElementById('risk');
+   var myChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+         labels: {{risk_data[0]|safe}},
+         datasets: [
+            {
+               data: {{risk_data[1]|safe}},
+               label: "Risk-Score in %",
+               borderColor: {{risk_data[2]|safe}},
+               backgroundColor: {{risk_data[3]|safe}},
+               borderWidth: 3,
+            },
+
+            {
+               data: {{risk_data[4]|safe}},
+               label: "Return for past year in %",
+               borderColor: {{risk_data[2]|safe}},
+               backgroundColor: {{risk_data[3]|safe}},
+               borderWidth: 3,
+            },
+      ]
+      },
+      options: {
+        scales: {
+            
+            yAxes: [{
+            ticks: {
+            
+                   min: 0,
+                   callback: function(value){return value+ "%"}
+                },  
+								scaleLabel: {
+                   display: true,
+                   labelString: "Percentage"
+                }
+            }]
+        }
+    }
+      
    });
    </script>
 </div>
