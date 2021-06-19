@@ -120,23 +120,21 @@
                      <p>Which sectors do you prefer?</p>
                      <select class="form-control" multiple name=sector>
                         {% for sector in sectors%}
-                        <option value={{sector.replace(" ", "_")}}>{{sector}}</option>
+                        <option value={{sector.replace(" ", "_")}}><p>{{sector}}</p></option>
                         {% endfor %}
                       </select>
 
                      <p><br/>How risk-averse are you?</p>
                      <select name="risk" class="form-control">
-                        <option value="1">1</option>
-                        <option value ="2">2</option>
-                        <option value ="3">3</option>
+                        <option value="0.9">I never take risks.</option>
+                        <option value ="0.7">I sometimes take risks.</option>
+                        <option value ="0.5" selected="selected">I am averagely risk-averse.</option>
+                        <option value ="0.3">I often take risks.</option>
+                        <option value ="0.1">I always take risks.</option>
                      </select>
 
-                     <p><br/>What is the minimum return you want to receive?</p>
-                     <select name="min_return" class="form-control">
-                        <option value="1">1</option>
-                        <option value ="2">2</option>
-                        <option value ="3">3</option>
-                     </select>
+                     <p><br/>What is the minimum return you want to receive in %?</p>
+                     <input name="min_return" type="number" min="0" class="form-control" placeholder="0" value="0" required>
                      
                      <section id="blog" color="#777">
                         <div class="blog-thumb">

@@ -1,15 +1,15 @@
 from flask import Flask, url_for, request, render_template, redirect
 import pandas as pd
-import time
 import datetime
 from sqlalchemy.orm import Session
 from finviz.screener import Screener
 from sqlalchemy.ext.automap import automap_base
-from sqlalchemy import Boolean, Column, DateTime, Float, String, create_engine, or_, and_
+from sqlalchemy import Boolean, Column, DateTime, Float, String, create_engine, and_
 from pathlib import Path
 import os
+from statistics import mean
 
-#Create Dataclass for Redditpostes
+# create dataclass for redditpostes
 Base = automap_base()
 metadata = Base.metadata
 
@@ -22,7 +22,7 @@ class Redditpost(Base):
     passed_filter_checks = Column(Boolean)
     sentiment = Column(Float(53))
 
-# Connect to database
+# connect to database
 PGHOST='h2933354.stratoserver.net'
 PGDATABASE='admin'
 PGUSER='admin'
@@ -36,14 +36,16 @@ Base.prepare(engine, reflect=True)
 Base.metadata.create_all(bind=engine)
 session = Session(engine)
 
-# Extrahieren aller Ticker in der DB um mit diesen später zu filtern
-ticker_obj = session.query(Redditpost.ticker).distinct().all()
-ticker = [ticker[0] for ticker in ticker_obj]
+# extract all tickers to filter with them later
+# ticker_obj = session.query(Redditpost.ticker).distinct().all()
+# ticker = [ticker[0] for ticker in ticker_obj]
 
-# Update metadata if it is older than 24 hours
+# update metadata if it is older than 24 hours
 delta = datetime.datetime.utcnow() - datetime.datetime.strptime(str(list(Path(".").rglob("metadata_*.csv"))[0])[-30:-4], '%Y-%m-%d %H:%M:%S.%f')
+
 if delta.days == 0:
     df_data = pd.read_csv(str(list(Path(".").rglob("metadata_*.csv"))[0]), index_col=False)
+
 else:
     stock_list_performance = Screener(table='Performance', order='price', filters = ['cap_midover', 'ipodate_more1', 'exch_nasd'])
     stock_list_overview = Screener(table='Overview', order='price', filters = ['cap_midover', 'ipodate_more1', 'exch_nasd'])
@@ -61,71 +63,73 @@ else:
 
 
 # app = Flask(__name__) creates an instance of the Flask class called app. 
-# The first argument is the name of the module or package (in this case Flask). 
-# We are passing the argument __name__ to the constructor as the name of the application package. 
-# It is used by Flask to find static assets, templates and so on.
+# the first argument is the name of the module or package (in this case Flask). 
+# we are passing the argument __name__ to the constructor as the name of the application package. 
+# it is used by Flask to find static assets, templates and so on.
 app = Flask(__name__)
 
-# As the pictures are changing after each classification, the caching of this app must be disabled
-app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
-
-# We set the Track Modifications to True so thatFlask-SQLAlchemy will track modifications of objects and emit signals. 
-# The default is None, which enables tracking but issues a warning that it will be disabled by default in the future. 
-# This requires extra memory and should be disabled if not needed.
+# we set the Track Modifications to True so thatFlask-SQLAlchemy will track modifications of objects and emit signals. 
+# the default is None, which enables tracking but issues a warning that it will be disabled by default in the future. 
+# this requires extra memory and should be disabled if not needed.
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
 # CREATING ROUTES
-# We use Routes to associate a URL to a view function. A view function is simply a function which responds to the request. 
+# we use Routes to associate a URL to a view function. A view function is simply a function which responds to the request. 
 
-# This code registers the index() view function as a handler for the root URL of the application. 
-# Everytime the application receives a request where the path is "/" the index() function will be invoked and the return the index.html template.
+# this code registers the index() view function as a handler for the root URL of the application. 
+# everytime the application receives a request where the path is "/" the index() function will be invoked and the return the index.html template.
 @app.route("/")
 def index():
     return render_template('index.html')
 
-# This function returns the preferences.html page which is used to input a text which should be analyzed.
+# this function returns the preferences.html page which is used to input get the customer preferences regarding sector, risk und return.
 @app.route("/preferences")
 def preferences():
     return render_template('preferences.html', sectors=sorted(list(set(df_data['Sector']))))
 
-# This function is used to pass the text input to the machine learning classification model and calculate the results if we are only using the clustering based on text features. 
+# this function is used to receive the customer preferences 
 @app.route("/preferences_end", methods=['GET', 'POST'])
 def preferences_end():
     if request.method == 'POST':
 
+        # read the sector preferences and apply the right format
         global sectors
         sectors = [sector.replace("_"," ") for sector in request.form.getlist("sector")]
 
+        # read the risk preferences
+        global risk_aversity
+        risk_aversity = float(request.form.getlist("risk")[0])
+
+        # read the minimal return and transform it to a decimal number
+        global min_return
+        min_return = float(request.form.getlist("min_return")[0])/100
+
         return redirect(url_for('dashboard'))
 
-# This function returns the calculated labels to the html templates. 
-# If someone opens this site bfore inserting a text he will get autatically redirected to the textinput. 
+# this function returns the calculated recommandations and the data for the dashboard
+# if someone opens this site before inserting setting the preferences he will get automatically redirected to the preferences input. 
 @app.route("/dashboard")
 def dashboard():
     try:
-        #Retrieve all tickers which are relevant for the customer sector preferences
+        # retrieve all tickers which are relevant for the customer sector preferences
         relevant_tickers = df_data[(df_data["Sector"].isin(sectors))]["Ticker"]
 
-        #Read the relevant tickers from the SQL database
+        # read the relevant tickers from the SQL database
         tickerdata = pd.DataFrame(session.query(Redditpost.ticker, Redditpost.created_utc, Redditpost.sentiment).filter(and_(Redditpost.ticker.in_(relevant_tickers), Redditpost.sentiment != None)).all(),\
                   columns=["Ticker", "created_utc", "sentiment"]).sort_values("created_utc")
 
-        #Join the tickers with the metadata
+        # join the tickers with the metadata
         tickerdata = pd.merge(tickerdata, df_data, on=["Ticker", "Ticker"], how="left", indicator=True
             ).query('_merge=="both"')[["Ticker", "created_utc", "sentiment", "Company", "Sector", "Industry", "Country", "Price", "Perf YTD", "Volatility M"]]
         
-        #Define colors used in the dashboard
-        rgb=["rgba(152, 176, 155, 0.8)", "rgba(8, 103, 131, 0.8)", "rgba(146, 140, 138, 0.8)", "rgba(192, 192, 153, 0.8)", "rgba(59, 60, 59, 0.8)", "rgba(71, 173, 207, 0.8)", "rgba(99, 136, 104, 0.8)", "rgba(8, 75, 96, 0.8)", "rgba(8, 50, 62, 0.8)", "rgba(192, 226, 238, 0.8)"]      
-        
-        #Aggregate data per ticker
+        # aggregate the data for each ticker
         series_collection = []
-        counter = 0
         for company in sorted(list(set(tickerdata["Ticker"]))):
 
-            # Extract the data for each each ticker
+            # extract the data for each each ticker
             df = tickerdata[tickerdata['Ticker'] == company]
 
-            # Read the matadata of the ticker
+            # read the matadata of the ticker
             name_variable = list(df_data[(df_data["Ticker"] == company)]["Company"])[0]
             sector_variable = list(df_data[(df_data["Ticker"] == company)]["Sector"])[0]
             industry_variable = list(df_data[(df_data["Ticker"] == company)]["Industry"])[0]
@@ -134,47 +138,95 @@ def dashboard():
             return_variable = list(df_data[(df_data["Ticker"] == company)]["Perf YTD"])[0]
             risk_variable = list(df_data[(df_data["Ticker"] == company)]["Volatility M"])[0]
 
-            # Add a current timestamp with sentiment 0 to ensure that the time series of every ticker has same length
+            # add a current timestamp with sentiment 0 to ensure that the time series of every ticker has same length
             df = df.append(pd.DataFrame({'Ticker':[company],'created_utc':[datetime.datetime.utcnow()],'sentiment':[0], 'Company':[name_variable], 'Sector':[sector_variable], 'Industry':[industry_variable], 'Country':[country_variable], 'Price':[price_variable], 'Perf YTD':[return_variable], 'Volatility':[risk_variable]}), ignore_index=False)
 
-            # Calculate average sentiment per 6 hours and calculate the rolling average based on the 6-hour-average
+            # calculate average sentiment per 6 hours and calculate the rolling average based on the 6-hour-average
             resampled_ticker = df.resample('6h', on='created_utc').sentiment.mean().fillna(0).rolling('24h').mean()
 
-            # Safe for each ticker: (newest 125 sentiment 6-hour-time-series-intervalls, comany and sector, used line color)
-            series_collection.append((list(resampled_ticker)[-125:], company, name_variable, sector_variable, industry_variable, country_variable, price_variable, return_variable, risk_variable, rgb[counter]))
+            # safe each ticker
+            series_collection.append({"sentiments":list(resampled_ticker)[-125:], "ticker": company, "company": name_variable, "sector": sector_variable, "industry": industry_variable, "country": country_variable, "price": price_variable, "return": return_variable, "risk": risk_variable})
 
-            #Allows repaeting the colors (we use 10 different colors)
-            counter +=1
-            if counter == 10:
-                counter = 0
+        # remove all tickers which dont hold the minimum return constraint
+        series_collection = [series for series in series_collection if float(series["return"].strip("%"))/100 >= min_return]  
 
+        # calculate sentiment and risk scores
+        sentiment_ranking = {}
+        risk_ranking = {}
+        for index in range(len(series_collection)):
+            series_collection[index]["sentiment_score"] = mean(series_collection[index]["sentiments"])
+            
+            sentiment_ranking[series_collection[index]["ticker"]] = series_collection[index]["sentiment_score"]
+            risk_ranking[series_collection[index]["ticker"]] = float(series_collection[index]["risk"].strip("%"))
 
-        #resampled_ticker = tickerdata.resample('6H', on='created_utc', offset='0Min0s').sentiment.mean().fillna(method='ffill')
-        #tickerdata = tickerdata.set_index("created_utc").sort_index()
+        # calculate sentiment ranking
+        sorted(sentiment_ranking, key=sentiment_ranking.get, reverse=True)
+        sentiment_ranking = {key: rank for rank, key in enumerate(sorted(sentiment_ranking, key=sentiment_ranking.get, reverse=True), 1)}
+
+        # calculate risk ranking
+        sorted(risk_ranking, key=risk_ranking.get, reverse=False)
+        risk_ranking = {key: rank for rank, key in enumerate(sorted(risk_ranking, key=risk_ranking.get, reverse=False), 1)}
+
+        # safe the the sentiment and risk renking and calculate, save the weighted average of them based on the risk-aversity
+        total_ranking = {}
+        for index in range(len(series_collection)):
+            sentiment_rank = sentiment_ranking[series_collection[index]["ticker"]]
+            risk_rank = risk_ranking[series_collection[index]["ticker"]]
+            
+            series_collection[index]["sentiment_rank"] = sentiment_rank
+            series_collection[index]["risk_rank"] = risk_rank
+            total_ranking[series_collection[index]["ticker"]] = (risk_aversity * risk_rank + (1 - risk_aversity) * sentiment_rank)
+
+        # calculate total ranking
+        sorted(total_ranking, key=total_ranking.get, reverse=False)
+        total_ranking = {key: rank for rank, key in enumerate(sorted(total_ranking, key=total_ranking.get, reverse=False), 1)}
+
+        # add total rank to the tickers
+        for index in range(len(series_collection)):
+            total_rank = total_ranking[series_collection[index]["ticker"]]
+            
+            series_collection[index]["total_rank"] = total_rank
+
+        # keep only 10 best ranked tickers
+        series_collection_best = [series for series in series_collection if series["total_rank"] <= 10]  
+
+        # sort the remaining tickers based on the ranking
+        def sort_on_rank(element):
+            return element["total_rank"]
+
+        series_collection_best = sorted(series_collection_best, key=sort_on_rank)
+
+        # round the sentiment score
+        for index in range(len(series_collection_best)):
+            series_collection_best[index]["sentiment_score"] = round(series_collection[index]["sentiment_score"], 3)
+
+        # define colors used in the dashboard
+        rgb=["rgba(152, 176, 155, 0.8)", "rgba(8, 103, 131, 0.8)", "rgba(146, 140, 138, 0.8)", "rgba(192, 192, 153, 0.8)", "rgba(59, 60, 59, 0.8)", "rgba(71, 173, 207, 0.8)", "rgba(99, 136, 104, 0.8)", "rgba(8, 75, 96, 0.8)", "rgba(8, 50, 62, 0.8)", "rgba(192, 226, 238, 0.8)"]      
+
+        # assign colors to the tickers
+        for index in range(len(series_collection_best)):
+            series_collection_best[index]["color"] = rgb[index]
         
+        # preparing the risk and return data (the visualisation program demands different data-structures for the two graphs inthe dashboard)
+        risk_return_data = {"tickers": [data["ticker"] for data in series_collection_best], "risks": [float(data["risk"].strip("%")) for data in series_collection_best], "returns": [float(data["return"].strip("%")) for data in series_collection_best], "borderColors": [data["color"] for data in series_collection_best], "backgroundColors": [data["color"].replace("0.8", "0.7") for data in series_collection_best]}
 
-        # Combining the time stamps with the sentiment data
-        sentiment_data = [[int(date/1000000) for date in resampled_ticker.index.values.tolist()][-125:], series_collection]
-        #sentiment_data = [[int(date/1000000) for date in tickerdata.index.values.tolist()], list(tickerdata["sentiment"].rolling('24h').mean())]
+        # combining the time stamps with the sentiment data
+        sentiment_data = [[int(date/1000000) for date in resampled_ticker.index.values.tolist()][-125:], series_collection_best]
         
-        risk_data = [[data[1] for data in sentiment_data[1]]]
-        risk_data.append([float(data[8].strip("%")) for data in sentiment_data[1]])
-        risk_data.append([data[9] for data in sentiment_data[1]])
-        risk_data.append([data[9].replace("0.8", "0.7") for data in sentiment_data[1]])
-        risk_data.append([float(data[7].strip("%")) for data in sentiment_data[1]])
-
-        return render_template('dashboard.html', sentiment_data=sentiment_data, risk_data=risk_data)
+        return render_template('dashboard.html', sentiment_data=sentiment_data, risk_return_data=risk_return_data)
+    
+    # return to the preferences input if they were not set before
     except NameError:
         return render_template('preferences.html', sectors=sorted(list(set(df_data['Sector']))))
 
-# This function returns the team.html page containing the information details from our team.
+# this function returns the team.html page containing the information details from our team.
 @app.route("/team")
 def team():
     return render_template('team.html')
 
-# Python assigns the name "__main__" to the script when the script is executed. 
-# If the script is imported from another script, the script keeps it given name (e.g. app.py). 
-# In our case we are executing the script. Therefore, __name__ will be equal to "__main__". 
-# That means the if conditional statement is satisfied and the app.run() method will be executed.
+# python assigns the name "__main__" to the script when the script is executed. 
+# if the script is imported from another script, the script keeps it given name (e.g. app.py). 
+# in our case we are executing the script. Therefore, __name__ will be equal to "__main__". 
+# that means the if conditional statement is satisfied and the app.run() method will be executed.
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=500, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=False)

@@ -112,95 +112,131 @@
 <!-- Dashboard
 ================================================== -->
 <div class="wow fadeInUp" data-wow-delay="1.6s">
-   <h1 align="center">24h Rolling Average of Reddit Sentiments</h1>
-   <canvas id="sentiment" height="80"></canvas>
-   <script>
-   var ctx = document.getElementById('sentiment');
-   var myChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-         labels: {{sentiment_data[0]}},
-         datasets: [
-            {% for data in sentiment_data[1] %}
-            {
-               data: {{data[0]}},
-               label: "{{data[1] + ", " + data[3]| safe }}",
-               borderColor: "{{data[-1]| safe }}",
-               fill: false,
-               lineTension: 0
-            },
-            {% endfor %}
-      ]
-      },
-      options: {
-         legend: {
-         display: true
-         },
-         scales: {
-            xAxes: [{
-               type: 'time',
-               time: {
-                  unit: 'day'
-            }
-            }],
-            yAxes : [{
-               ticks : {
-                  max : 1,    
-                  min : -1
-               }
-            }]
-         }
-      }
-   });
-   </script>
-</div>
+   <table>
 
-<div class="wow fadeInUp" data-wow-delay="1.6s">
-   <h1 align="center">Risk-Score and Return</h1>
-   <canvas id="risk" height="80"></canvas>
-   <script>
-   var ctx = document.getElementById('risk');
-   var myChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-         labels: {{risk_data[0]|safe}},
-         datasets: [
-            {
-               data: {{risk_data[1]|safe}},
-               label: "Risk-Score in %",
-               borderColor: {{risk_data[2]|safe}},
-               backgroundColor: {{risk_data[3]|safe}},
-               borderWidth: 3,
-            },
+      <colgroup>
+         <col span="1" style="width: 80%;">
+         <col span="1" style="width: 20%;">
+      </colgroup>
 
-            {
-               data: {{risk_data[4]|safe}},
-               label: "Return for past year in %",
-               borderColor: {{risk_data[2]|safe}},
-               backgroundColor: {{risk_data[3]|safe}},
-               borderWidth: 3,
-            },
-      ]
-      },
-      options: {
-        scales: {
-            
-            yAxes: [{
-            ticks: {
-            
-                   min: 0,
-                   callback: function(value){return value+ "%"}
-                },  
-								scaleLabel: {
-                   display: true,
-                   labelString: "Percentage"
-                }
-            }]
-        }
-    }
-      
-   });
-   </script>
+      <tbody>
+         <tr>
+
+            <td style="padding:30px 50px 0 50px; vertical-align:top;">
+               <h1 align="center">24h Rolling Average of Reddit Sentiment</h1>
+               <canvas id="sentiment" height="100"></canvas>
+               <script>
+                  var ctx = document.getElementById('sentiment');
+                  var myChart = new Chart(ctx, {
+                     type: 'line',
+                     data: {
+                        labels: {{sentiment_data[0]}},
+                        datasets: [
+                        {% for data in sentiment_data[1] %}
+                           {
+                           data: {{data["sentiments"]}},
+                           label: "{{data["ticker"]| safe }}",
+                           borderColor: "{{data["color"]| safe }}",
+                           fill: false,
+                           lineTension: 0.4,
+                           pointRadius: 0
+                           },
+                        {% endfor %}
+                        ]
+                     },
+                     options: {
+                        legend: {
+                           display: true
+                        },
+                        scales: {
+                           xAxes: [{
+                              type: 'time',
+                              time: {
+                                 unit: 'day'
+                              }
+                           }],
+                           yAxes : [{
+                              ticks : {
+                                 max : 1,    
+                                 min : -1
+                              },
+                              scaleLabel: {
+                                 display: true,
+                                 labelString: "Sentiment"
+                              }
+                           }]
+                        }
+                     }
+                  });
+               </script>
+            </td>
+
+            <td rowspan="3" style="padding:30px 50px 30px 30px; vertical-align:top;">
+               <h1 align="center">Yor Stock Ranking</h1>
+               {% for data in sentiment_data[1] %}
+               <details {% if data["total_rank"] == 1 %}open{% endif %}>
+                  <summary><h3 style="color:{{data["color"]}}"><b>{{data["total_rank"]}}{{". " + data["ticker"]}}</b></h3></summary>
+                  <p><b>{{data["company"]}}</b></p> 
+                  <p>A <b>{{data["sector"]}}</b> Company based in <b>{{data["country"]}}</b> in the <b>{{data["industry"]}}</b> Industry</p>
+                  <ul>
+                     <li><p>Price: {{data["price"]}} $</p></li>
+                     <li><p>Sentiment-Score: {{data["sentiment_score"]}}</p></li>
+                     <li><p>Risk-Score: {{data["risk"]}}</p></li>
+                     <li><p>Latest Return: {{data["return"]}}</p></li>
+                  </ul>
+               </details>
+               {% endfor %}
+            </td>
+
+         </tr>
+
+         <tr>
+
+            <td style="padding:30px 50px 30px 50px; vertical-align:top;">
+               <h1 align="center">Risk-Score and Return</h1>
+               <canvas id="risk" height="80"></canvas>
+               <script>
+                  var ctx = document.getElementById('risk');
+                  var myChart = new Chart(ctx, {
+                     type: 'bar',
+                     data: {
+                        labels: {{risk_return_data["tickers"]|safe}},
+                        datasets: [
+                           {
+                           data: {{risk_return_data["risks"]|safe}},
+                           label: "Risk-Score in %",
+                           borderColor: {{risk_return_data["borderColors"]|safe}},
+                           backgroundColor: {{risk_return_data["backgroundColors"]|safe}},
+                           borderWidth: 3,
+                           },
+                           {
+                           data: {{risk_return_data["returns"]|safe}},
+                           label: "Return of past year in %",
+                           borderColor: {{risk_return_data["borderColors"]|safe}},
+                           backgroundColor: {{risk_return_data["backgroundColors"]|safe}},
+                           borderWidth: 3,
+                           },
+                        ]
+                     },
+                     options: {
+                        scales: {
+                           yAxes: [{
+                              ticks: {
+                                 callback: function(value){return value+ "%"}
+                              },  
+                              scaleLabel: {
+                                 display: true,
+                                 abelString: "Percentage"
+                              }
+                           }]
+                        }
+                     }
+                  });
+               </script>
+            </td>
+         </tr>
+      </tbody>
+   </table>
 </div>
 
 <!-- Footer section

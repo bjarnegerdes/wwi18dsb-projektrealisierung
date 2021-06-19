@@ -82,11 +82,53 @@ a:focus {
   transition: all 0.25s ease-out;
 }
 
-/*img {
-  width: 100%;
-  max-width: 100%;
-}
+/* details section styles
+/* ========================================== */
 
+details {
+  margin: 1.3rem 0;
+  border-bottom: 1px solid #aaa;
+  padding: 0.5rem;
+  height: auto;
+  max-height: 1.5rem; /* set to line heihgt */
+  transition: all 0.1s ease;
+  }
+  
+details[open] {
+  max-height: 99rem;
+  transition: all 1s ease;
+  border: 0px solid #aaa;
+  }
+  
+details summary {
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 0.5em;
+  font-weight: bold;
+  margin: -0.5em -0.5em 0;
+  padding: 0.5em;
+  }
+  
+details[open] summary {
+  border-bottom: 1px solid #aaa;
+  margin-bottom: 0.8em;
+  }
+
+details > summary {
+    list-style-type: none;
+  }
+  
+details > summary::-webkit-details-marker {
+    display: none;
+  }
+  
+details > summary::before {
+    content: none;
+  }
+  
+details[open] > summary::before {
+    content: none;
+  }
 
 /* preloader styles
 /* ========================================== */
