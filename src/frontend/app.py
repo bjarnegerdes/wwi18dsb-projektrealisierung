@@ -36,31 +36,6 @@ Base.prepare(engine, reflect=True)
 Base.metadata.create_all(bind=engine)
 session = Session(engine)
 
-# extract all tickers to filter with them later
-# ticker_obj = session.query(Redditpost.ticker).distinct().all()
-# ticker = [ticker[0] for ticker in ticker_obj]
-
-# update metadata if it is older than 24 hours
-delta = datetime.datetime.utcnow() - datetime.datetime.strptime(str(list(Path(".").rglob("metadata_*.csv"))[0])[-30:-4], '%Y-%m-%d %H:%M:%S.%f')
-
-if delta.days == 0:
-    df_data = pd.read_csv(str(list(Path(".").rglob("metadata_*.csv"))[0]), index_col=False)
-
-else:
-    stock_list_performance = Screener(table='Performance', order='price', filters = ['cap_midover', 'ipodate_more1', 'exch_nasd'])
-    stock_list_overview = Screener(table='Overview', order='price', filters = ['cap_midover', 'ipodate_more1', 'exch_nasd'])
-    # Daten lesen als Dataframe und mergen
-    df_performance = pd.DataFrame(stock_list_performance.data)
-    df_overview = pd.DataFrame(stock_list_overview.data)
-
-    difference_cols = list(df_performance.columns.difference(df_overview.columns))
-    difference_cols.append("Ticker")
-
-    df_data = df_overview.merge(df_performance[difference_cols], left_on="Ticker", right_on="Ticker", how="outer")
-
-    os.remove(str(list(Path(".").rglob("metadata_*.csv"))[0]))
-    df_data.to_csv(f"metadata_{datetime.datetime.utcnow()}.csv", index=False)
-
 
 # app = Flask(__name__) creates an instance of the Flask class called app. 
 # the first argument is the name of the module or package (in this case Flask). 
@@ -85,7 +60,31 @@ def index():
 # this function returns the preferences.html page which is used to input get the customer preferences regarding sector, risk und return.
 @app.route("/preferences")
 def preferences():
-    return render_template('preferences.html', sectors=sorted(list(set(df_data['Sector']))))
+
+    global df_data
+
+    # update metadata if it is older than 24 hours
+    delta = datetime.datetime.utcnow() - datetime.datetime.strptime(str(list(Path(".").rglob("metadata_*.csv"))[0])[-30:-4], '%Y-%m-%d %H:%M:%S.%f')
+
+    if delta.days == 0:
+        df_data = pd.read_csv(str(list(Path(".").rglob("metadata_*.csv"))[0]), index_col=False)
+
+    else:
+        stock_list_performance = Screener(table='Performance', order='price', filters = ['cap_midover', 'ipodate_more1', 'exch_nasd'])
+        stock_list_overview = Screener(table='Overview', order='price', filters = ['cap_midover', 'ipodate_more1', 'exch_nasd'])
+        # Daten lesen als Dataframe und mergen
+        df_performance = pd.DataFrame(stock_list_performance.data)
+        df_overview = pd.DataFrame(stock_list_overview.data)
+
+        difference_cols = list(df_performance.columns.difference(df_overview.columns))
+        difference_cols.append("Ticker")
+
+        df_data = df_overview.merge(df_performance[difference_cols], left_on="Ticker", right_on="Ticker", how="outer")
+
+        os.remove(str(list(Path(".").rglob("metadata_*.csv"))[0]))
+        df_data.to_csv(f"metadata_{datetime.datetime.utcnow()}.csv", index=False)
+
+    return render_template('preferences.html', sectors=sorted(list(set(df_data['Sector']))), hint=False)
 
 # this function is used to receive the customer preferences 
 @app.route("/preferences_end", methods=['GET', 'POST'])
@@ -213,11 +212,15 @@ def dashboard():
         # combining the time stamps with the sentiment data
         sentiment_data = [[int(date/1000000) for date in resampled_ticker.index.values.tolist()][-125:], series_collection_best]
         
+        # if filter constraints lead to no data: redirect to preferences page
+        if len(sentiment_data[1]) == 0:
+            return render_template('preferences.html', sectors=sorted(list(set(df_data['Sector']))), hint="Please ease your constraints. Your preferences excluded all stocks.")
+        
         return render_template('dashboard.html', sentiment_data=sentiment_data, risk_return_data=risk_return_data)
     
     # return to the preferences input if they were not set before
     except NameError:
-        return render_template('preferences.html', sectors=sorted(list(set(df_data['Sector']))))
+        return render_template('preferences.html', sectors=sorted(list(set(df_data['Sector']))), hint=False)
 
 # this function returns the team.html page containing the information details from our team.
 @app.route("/team")

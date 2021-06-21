@@ -115,6 +115,9 @@
             <center>
                <!-- iso section -->
                <div class="iso-section wow fadeInUp" data-wow-delay="2.6s">
+                  {% if hint %}
+                  <p style="color:rgba(8, 103, 131, 0.8)">{{hint}}<p>
+                  {% endif %}
                   <form id="preferences" method="post" action="/preferences_end">
                      
                      <p>Which sectors do you prefer?</p>

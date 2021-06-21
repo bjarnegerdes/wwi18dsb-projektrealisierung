@@ -177,7 +177,7 @@
                <details {% if data["total_rank"] == 1 %}open{% endif %}>
                   <summary><h3 style="color:{{data["color"]}}"><b>{{data["total_rank"]}}{{". " + data["ticker"]}}</b></h3></summary>
                   <p><b>{{data["company"]}}</b></p> 
-                  <p>A <b>{{data["sector"]}}</b> Company based in <b>{{data["country"]}}</b> in the <b>{{data["industry"]}}</b> Industry</p>
+                  <p>A <b>{{data["sector"]}}</b> Company located in <b>{{data["country"]}}</b> in the <b>{{data["industry"]}}</b> Industry</p>
                   <ul>
                      <li><p>Price: {{data["price"]}} $</p></li>
                      <li><p>Sentiment-Score: {{data["sentiment_score"]}}</p></li>
