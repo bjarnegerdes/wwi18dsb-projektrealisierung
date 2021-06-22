@@ -1,12 +1,13 @@
-from flask import Flask, url_for, request, render_template, redirect
-import pandas as pd
 import datetime
-from sqlalchemy.orm import Session
-from finviz.screener import Screener
-from sqlalchemy.ext.automap import automap_base
-from sqlalchemy import Boolean, Column, DateTime, Float, String, create_engine, and_
-from pathlib import Path
 import os
+import pandas as pd
+
+from finviz.screener import Screener
+from flask import Flask, url_for, request, render_template, redirect
+from pathlib import Path
+from sqlalchemy import Boolean, Column, DateTime, Float, String, create_engine, and_
+from sqlalchemy.ext.automap import automap_base
+from sqlalchemy.orm import Session
 from statistics import mean
 
 # create dataclass for redditpostes
@@ -36,6 +37,33 @@ Base.prepare(engine, reflect=True)
 Base.metadata.create_all(bind=engine)
 session = Session(engine)
 
+# define function to load metadata
+def load_metadata():
+    # update metadata if it is older than 24 hours
+    delta = datetime.datetime.utcnow() - datetime.datetime.strptime(str(list(Path(".").rglob("metadata_*.csv"))[0])[-30:-4], '%Y-%m-%d %H:%M:%S.%f')
+
+    if delta.days == 0:
+        data_df = pd.read_csv(str(list(Path(".").rglob("metadata_*.csv"))[0]), index_col=False)
+
+    else:
+        stock_list_performance = Screener(table='Performance', order='price', filters = ['cap_midover', 'ipodate_more1', 'exch_nasd'])
+        stock_list_overview = Screener(table='Overview', order='price', filters = ['cap_midover', 'ipodate_more1', 'exch_nasd'])
+        # Daten lesen als Dataframe und mergen
+        df_performance = pd.DataFrame(stock_list_performance.data)
+        df_overview = pd.DataFrame(stock_list_overview.data)
+
+        difference_cols = list(df_performance.columns.difference(df_overview.columns))
+        difference_cols.append("Ticker")
+
+        data_df = df_overview.merge(df_performance[difference_cols], left_on="Ticker", right_on="Ticker", how="outer")
+
+        os.remove(str(list(Path(".").rglob("metadata_*.csv"))[0]))
+        data_df.to_csv(f"metadata_{datetime.datetime.utcnow()}.csv", index=False)
+    
+    return data_df
+
+# load metadata first before starting
+df_data = load_metadata()
 
 # app = Flask(__name__) creates an instance of the Flask class called app. 
 # the first argument is the name of the module or package (in this case Flask). 
@@ -61,28 +89,9 @@ def index():
 @app.route("/preferences")
 def preferences():
 
+    #update metadata
     global df_data
-
-    # update metadata if it is older than 24 hours
-    delta = datetime.datetime.utcnow() - datetime.datetime.strptime(str(list(Path(".").rglob("metadata_*.csv"))[0])[-30:-4], '%Y-%m-%d %H:%M:%S.%f')
-
-    if delta.days == 0:
-        df_data = pd.read_csv(str(list(Path(".").rglob("metadata_*.csv"))[0]), index_col=False)
-
-    else:
-        stock_list_performance = Screener(table='Performance', order='price', filters = ['cap_midover', 'ipodate_more1', 'exch_nasd'])
-        stock_list_overview = Screener(table='Overview', order='price', filters = ['cap_midover', 'ipodate_more1', 'exch_nasd'])
-        # Daten lesen als Dataframe und mergen
-        df_performance = pd.DataFrame(stock_list_performance.data)
-        df_overview = pd.DataFrame(stock_list_overview.data)
-
-        difference_cols = list(df_performance.columns.difference(df_overview.columns))
-        difference_cols.append("Ticker")
-
-        df_data = df_overview.merge(df_performance[difference_cols], left_on="Ticker", right_on="Ticker", how="outer")
-
-        os.remove(str(list(Path(".").rglob("metadata_*.csv"))[0]))
-        df_data.to_csv(f"metadata_{datetime.datetime.utcnow()}.csv", index=False)
+    df_data = load_metadata()
 
     return render_template('preferences.html', sectors=sorted(list(set(df_data['Sector']))), hint=False)
 
@@ -159,14 +168,12 @@ def dashboard():
             risk_ranking[series_collection[index]["ticker"]] = float(series_collection[index]["risk"].strip("%"))
 
         # calculate sentiment ranking
-        sorted(sentiment_ranking, key=sentiment_ranking.get, reverse=True)
         sentiment_ranking = {key: rank for rank, key in enumerate(sorted(sentiment_ranking, key=sentiment_ranking.get, reverse=True), 1)}
 
         # calculate risk ranking
-        sorted(risk_ranking, key=risk_ranking.get, reverse=False)
         risk_ranking = {key: rank for rank, key in enumerate(sorted(risk_ranking, key=risk_ranking.get, reverse=False), 1)}
 
-        # safe the the sentiment and risk renking and calculate, save the weighted average of them based on the risk-aversity
+        # safe the the sentiment and risk ranking and calculate, save the weighted average of them based on the risk-aversity
         total_ranking = {}
         for index in range(len(series_collection)):
             sentiment_rank = sentiment_ranking[series_collection[index]["ticker"]]
@@ -177,7 +184,6 @@ def dashboard():
             total_ranking[series_collection[index]["ticker"]] = (risk_aversity * risk_rank + (1 - risk_aversity) * sentiment_rank)
 
         # calculate total ranking
-        sorted(total_ranking, key=total_ranking.get, reverse=False)
         total_ranking = {key: rank for rank, key in enumerate(sorted(total_ranking, key=total_ranking.get, reverse=False), 1)}
 
         # add total rank to the tickers
@@ -197,7 +203,7 @@ def dashboard():
 
         # round the sentiment score
         for index in range(len(series_collection_best)):
-            series_collection_best[index]["sentiment_score"] = round(series_collection[index]["sentiment_score"], 3)
+            series_collection_best[index]["sentiment_score"] = round(series_collection_best[index]["sentiment_score"], 3)
 
         # define colors used in the dashboard
         rgb=["rgba(152, 176, 155, 0.8)", "rgba(8, 103, 131, 0.8)", "rgba(146, 140, 138, 0.8)", "rgba(192, 192, 153, 0.8)", "rgba(59, 60, 59, 0.8)", "rgba(71, 173, 207, 0.8)", "rgba(99, 136, 104, 0.8)", "rgba(8, 75, 96, 0.8)", "rgba(8, 50, 62, 0.8)", "rgba(192, 226, 238, 0.8)"]      
@@ -214,7 +220,7 @@ def dashboard():
         
         # if filter constraints lead to no data: redirect to preferences page
         if len(sentiment_data[1]) == 0:
-            return render_template('preferences.html', sectors=sorted(list(set(df_data['Sector']))), hint="Please ease your constraints. Your preferences excluded all stocks.")
+            return render_template('preferences.html', sectors=sorted(list(set(df_data['Sector']))), hint="According to your preferences there were no suitable stocks. Please ease your constraints and try again.")
         
         return render_template('dashboard.html', sentiment_data=sentiment_data, risk_return_data=risk_return_data)
     
