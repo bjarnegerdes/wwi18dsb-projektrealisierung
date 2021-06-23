@@ -53,6 +53,17 @@ services:
       - postgres
     restart: always
 
+  frontend:
+    container_name: frontend
+    build: ./frontend/
+    networks:
+      - postgres
+    restart: always
+    ports:
+      - "80:5000"
+    environment:
+      use_remote: 1 # uses strato server or as data source if 1, else uses local data source
+
 networks:
   postgres:
     driver: bridge

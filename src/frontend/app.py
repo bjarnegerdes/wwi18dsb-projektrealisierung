@@ -24,11 +24,18 @@ class Redditpost(Base):
     sentiment = Column(Float(53))
 
 # connect to database
-PGHOST='h2933354.stratoserver.net'
+if os.environ['use_remote'] == 1:
+    PGHOST='h2933354.stratoserver.net'
+    PGPORT='3000'
+
+else:
+    PGHOST='postgres_container'
+    PGPORT='5432'
+
 PGDATABASE='admin'
 PGUSER='admin'
 PGPASSWORD='password'
-PGPORT='3000'
+
 
 engine = create_engine('postgresql://'+PGUSER+':'+PGPASSWORD+'@'+PGHOST+':'+PGPORT+'/'+PGDATABASE)
 conn = engine.connect()
@@ -40,10 +47,13 @@ session = Session(engine)
 # define function to load metadata
 def load_metadata():
     # update metadata if it is older than 24 hours
-    delta = datetime.datetime.utcnow() - datetime.datetime.strptime(str(list(Path(".").rglob("metadata_*.csv"))[0])[-30:-4], '%Y-%m-%d %H:%M:%S.%f')
-
-    if delta.days == 0:
-        data_df = pd.read_csv(str(list(Path(".").rglob("metadata_*.csv"))[0]), index_col=False)
+    metadatas = list(Path(".").rglob("metadata_*.csv"))
+    
+    if len(metadatas) > 0:
+        delta = datetime.datetime.utcnow() - datetime.datetime.strptime(str(metadatas[0])[-30:-4], '%Y-%m-%d %H:%M:%S.%f')
+        if delta.days == 0:
+            data_df = pd.read_csv(str(list(Path(".").rglob("metadata_*.csv"))[0]), index_col=False)
+        os.remove(str(list(Path(".").rglob("metadata_*.csv"))[0]))
 
     else:
         stock_list_performance = Screener(table='Performance', order='price', filters = ['cap_midover', 'ipodate_more1', 'exch_nasd'])
@@ -56,8 +66,6 @@ def load_metadata():
         difference_cols.append("Ticker")
 
         data_df = df_overview.merge(df_performance[difference_cols], left_on="Ticker", right_on="Ticker", how="outer")
-
-        os.remove(str(list(Path(".").rglob("metadata_*.csv"))[0]))
         data_df.to_csv(f"metadata_{datetime.datetime.utcnow()}.csv", index=False)
     
     return data_df
