@@ -58,7 +58,7 @@ def load_metadata():
     else:
         stock_list_performance = Screener(table='Performance', order='price', filters = ['cap_midover', 'ipodate_more1', 'exch_nasd'])
         stock_list_overview = Screener(table='Overview', order='price', filters = ['cap_midover', 'ipodate_more1', 'exch_nasd'])
-        # Daten lesen als Dataframe und mergen
+        # Read data as dataframes and merge them
         df_performance = pd.DataFrame(stock_list_performance.data)
         df_overview = pd.DataFrame(stock_list_overview.data)
 
@@ -78,6 +78,9 @@ df_data = load_metadata()
 # we are passing the argument __name__ to the constructor as the name of the application package. 
 # it is used by Flask to find static assets, templates and so on.
 app = Flask(__name__)
+
+# Dasabling caching of this app
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 # we set the Track Modifications to True so thatFlask-SQLAlchemy will track modifications of objects and emit signals. 
 # the default is None, which enables tracking but issues a warning that it will be disabled by default in the future. 
@@ -160,8 +163,11 @@ def dashboard():
             # calculate average sentiment per 6 hours and calculate the rolling average based on the 6-hour-average
             resampled_ticker = df.resample('6h', on='created_utc').sentiment.mean().fillna(0).rolling('24h').mean()
 
-            # safe each ticker
-            series_collection.append({"sentiments":list(resampled_ticker)[-125:], "ticker": company, "company": name_variable, "sector": sector_variable, "industry": industry_variable, "country": country_variable, "price": price_variable, "return": return_variable, "risk": risk_variable})
+            null_ratio = [round(value, 3)for value in list(resampled_ticker)[-125:]].count(0)/len(list(resampled_ticker)[-125:])
+
+            # safe tickers which have only less than 30% of the time no sentiment data
+            if null_ratio < 0.3:
+                series_collection.append({"sentiments":list(resampled_ticker)[-125:], "ticker": company, "company": name_variable, "sector": sector_variable, "industry": industry_variable, "country": country_variable, "price": price_variable, "return": return_variable, "risk": risk_variable})
 
         # remove all tickers which dont hold the minimum return constraint
         series_collection = [series for series in series_collection if float(series["return"].strip("%"))/100 >= min_return]  
