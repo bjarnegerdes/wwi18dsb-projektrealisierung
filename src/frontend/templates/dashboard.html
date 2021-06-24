@@ -172,7 +172,7 @@
             </td>
 
             <td rowspan="3" style="padding:30px 50px 30px 30px; vertical-align:top;">
-               <h1 align="center">Yor Stock Ranking</h1>
+               <h1 align="center">Your Stock Ranking</h1>
                {% for data in sentiment_data[1] %}
                <details {% if data["total_rank"] == 1 %}open{% endif %}>
                   <summary><h3 style="color:{{data["color"]}}"><b>{{data["total_rank"]}}{{". " + data["ticker"]}}</b></h3></summary>

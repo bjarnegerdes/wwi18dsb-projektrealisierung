@@ -133,8 +133,8 @@ def dashboard():
         # retrieve all tickers which are relevant for the customer sector preferences
         relevant_tickers = df_data[(df_data["Sector"].isin(sectors))]["Ticker"]
 
-        # read the relevant tickers from the SQL database
-        tickerdata = pd.DataFrame(session.query(Redditpost.ticker, Redditpost.created_utc, Redditpost.sentiment).filter(and_(Redditpost.ticker.in_(relevant_tickers), Redditpost.sentiment != None)).all(),\
+        # read the relevant tickers from the SQL database for the last 40 days
+        tickerdata = pd.DataFrame(session.query(Redditpost.ticker, Redditpost.created_utc, Redditpost.sentiment).filter(and_(Redditpost.ticker.in_(relevant_tickers), Redditpost.sentiment != None, (Redditpost.created_utc+datetime.timedelta(days=40))>datetime.datetime.utcnow())).all(),\
                   columns=["Ticker", "created_utc", "sentiment"]).sort_values("created_utc")
 
         # join the tickers with the metadata
