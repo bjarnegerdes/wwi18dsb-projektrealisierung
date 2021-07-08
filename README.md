@@ -20,14 +20,14 @@ The goal of this project involves the development of machine learning models tha
 In addition to the technical development of the models, the preparation of various economic and project-specific analyses is a primary focus of this project.
 
 
-### Task distribution in the team
 | Contributor | Task |
 | ------------------ | ------------------ |
-| Anabel Lilja | * .....|
-| Bjarne Gerdes | * ..... |
-| Johannes Deufel | * ..... |
-| Nina Mergelsberg | * ..... |
-| Simone Marx | * ..... |
+| Anabel Lilja |  - Entwicklung des Projektvorgehens <br> - Verwaltung des Backlogs und der Reihenfolge der Aufgabenpakete <br> - Ausarbeitung des Projektberichts|
+| Bjarne Gerdes | - Datengewinnung und -aufbereitung, <br> - Entwicklung und Evaluierung  des Vorhersagemodells <br> - Ausarbeitung des Projektberichts| 
+| Johannes Deufel | - Entwicklung des Frontend <br> - Anbindung des Modells an das Frontend <br> - Entwicklung und Durchführung der WI-Aspekte <br> - Ausarbeitung des Projektberichts|
+| Nina Mergelsberg | - Status Reports <br> - Aktualisierung der Kosten-, Zeit- und Projektplan-Übersichten <br> - Entwicklung und Durchführung der wirtschaftlichen Analysen <br> - Ausarbeitung des Projektberichts|
+| Simone Marx | - Entwicklung und Durchführung der wirtschaftlichen Analysen <br> - Einhaltung der Scrum-Richtlinien <br> - Organisation und Moderation der Scrum-Meetings
+<br> - Ausarbeitung des Projektberichts|
 
 ## Getting started 
 #### Required programs
