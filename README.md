@@ -37,11 +37,10 @@ The required programs that have to be installed on our computer should be (as fa
 * python
 
 ### How to set it up
-Bevor der Code ausgeführt werden kann, muss der folgende Befehl aus der obersten Hierarcheebene heraus ausgeführt werden:
+Before the code can be executed, the following commands must be executed from the top hierarchy level:
 ```
 git clone https://github.com/bjarnege/wwi18dsb-projektrealisierung.git
 ```
-Bevor der Code ausgeführt werden kann, muss der folgende Befehl aus der obersten Hierarcheebene heraus ausgeführt werden: 
 ``` 
 python getting-started.py
 ```
