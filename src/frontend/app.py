@@ -48,14 +48,19 @@ session = Session(engine)
 def load_metadata():
     # update metadata if it is older than 24 hours
     metadatas = list(Path(".").rglob("metadata_*.csv"))
+
+    reload = True
     
     if len(metadatas) > 0:
         delta = datetime.datetime.utcnow() - datetime.datetime.strptime(str(metadatas[0])[-30:-4], '%Y-%m-%d %H:%M:%S.%f')
         if delta.days == 0:
             data_df = pd.read_csv(str(list(Path(".").rglob("metadata_*.csv"))[0]), index_col=False)
-        os.remove(str(list(Path(".").rglob("metadata_*.csv"))[0]))
+            reload = False
+        else:
+            os.remove(str(list(Path(".").rglob("metadata_*.csv"))[0]))
+            reload == True
 
-    else:
+    if reload:
         stock_list_performance = Screener(table='Performance', order='price', filters = ['cap_midover', 'ipodate_more1', 'exch_nasd'])
         stock_list_overview = Screener(table='Overview', order='price', filters = ['cap_midover', 'ipodate_more1', 'exch_nasd'])
         # Read data as dataframes and merge them
