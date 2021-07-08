@@ -21,13 +21,13 @@ In addition to the technical development of the models, the preparation of vario
 ### Task distribution in the team
 The distribution of tasks over the process of the project is as follows: 
 
-| Contributor | Task |
-| ------------------ | ------------------ |
-| Anabel Lilja |  - Entwicklung des Projektvorgehens, der Risikoanalyse und des SLA <br> - Verwaltung des Backlogs und der Reihenfolge der Aufgabenpakete <br> - Ausarbeitung des Projektberichts|
-| Bjarne Gerdes | - Datengewinnung und -aufbereitung, <br> - Entwicklung und Evaluierung  des Vorhersagemodells <br> - Evaluierung der Backendarchitektur <br> - Ausarbeitung des Projektberichts| 
-| Johannes Deufel | - Entwicklung des Frontend <br> - Anbindung des Modells an das Frontend <br> - Entwicklung und Durchführung der WI-Aspekte <br> - Ausarbeitung des Projektberichts|
-| Nina Mergelsberg | - Status Reports <br> - Aktualisierung der Kosten-, Zeit- und Projektplan-Übersichten <br> - Entwicklung und Durchführung der wirtschaftlichen Analysen <br> - Ausarbeitung des Projektberichts|
-| Simone Marx | - Entwicklung und Durchführung der wirtschaftlichen Analysen <br> - Einhaltung der Scrum-Richtlinien <br> - Organisation und Moderation der Scrum-Meetings <br> - Ausarbeitung des Projektberichts|
+| Contributor | Task | Points |
+| ------------------ | ------------------ | ------------------ |
+| Anabel Lilja |  - Entwicklung des Projektvorgehens, der Risikoanalyse und des SLA <br> - Verwaltung des Backlogs und der Reihenfolge der Aufgabenpakete <br> - Ausarbeitung des Projektberichts| 100 Points |
+| Bjarne Gerdes | - Datengewinnung und -aufbereitung, <br> - Entwicklung und Evaluierung  des Vorhersagemodells <br> - Evaluierung der Backendarchitektur <br> - Ausarbeitung des Projektberichts| 100 Points |
+| Johannes Deufel | - Entwicklung des Frontend <br> - Anbindung des Modells an das Frontend <br> - Entwicklung und Durchführung der WI-Aspekte <br> - Ausarbeitung des Projektberichts| 100 Points |
+| Nina Mergelsberg | - Status Reports <br> - Aktualisierung der Kosten-, Zeit- und Projektplan-Übersichten <br> - Entwicklung und Durchführung der wirtschaftlichen Analysen <br> - Ausarbeitung des Projektberichts| 100 Points |
+| Simone Marx | - Entwicklung und Durchführung der wirtschaftlichen Analysen <br> - Einhaltung der Scrum-Richtlinien <br> - Organisation und Moderation der Scrum-Meetings <br> - Ausarbeitung des Projektberichts| 100 Points |
 
 ## Getting started 
 #### Required programs
