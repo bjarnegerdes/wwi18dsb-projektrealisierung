@@ -29,20 +29,27 @@ The distribution of tasks over the process of the project is as follows:
 | Nina Mergelsberg | - Status Reports <br> - Aktualisierung der Kosten-, Zeit- und Projektplan-Übersichten <br> - Entwicklung und Durchführung der wirtschaftlichen Analysen <br> - Ausarbeitung des Projektberichts| 100 Points |
 | Simone Marx | - Entwicklung und Durchführung der wirtschaftlichen Analysen <br> - Einhaltung der Scrum-Richtlinien <br> - Organisation und Moderation der Scrum-Meetings <br> - Ausarbeitung des Projektberichts| 100 Points |
 
+### Live Demo 
+
+A minimal demo of the project can be opened by clicking on the image below.
+
+[![Watch the video](https://s20.directupload.net/images/210728/d7fwv4xi.jpg)](https://drive.google.com/file/d/1ep7TTYouwLP-sfdzqeHSb4nZ5SeAHMlo/view)
+
 ## Getting started 
 #### Required programs
-The required programs that have to be installed on our computer should be (as far as I remember): pip install
+The required programs that have to be installed on our computer should be:
 * docker
 * docker-compose
 * python
+* git
 
 ### How to set it up
 Before the code can be executed, the following commands must be executed from the top hierarchy level:
 ```
 git clone https://github.com/bjarnege/wwi18dsb-projektrealisierung.git
-```
-``` 
 python getting-started.py
+docker-compose build ./src/docker-compose.yml
+docker-compose up ./src/docker-compose.yml -d
 ```
 
 
